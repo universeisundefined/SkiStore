@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SkiStore.API.Dtos;
+using SkiStore.API.Errors;
 using SkiStore.Core.Entities;
 using SkiStore.Core.Interfaces;
 using SkiStore.Core.Specifications;
@@ -9,9 +10,7 @@ using SkiStore.Infrastructure.Data;
 
 namespace SkiStore.API.Controllers
 {
-    [ApiController]
-    [Route("api/[Controller]")]
-    public class ProductsController : ControllerBase
+    public class ProductsController : BaseApiController
     {
         private readonly IGenericRepository<Product> _productsRepo;
         private readonly IGenericRepository<ProductBrand> _productBrandRepo;
@@ -36,9 +35,14 @@ namespace SkiStore.API.Controllers
         }
 
         [HttpGet("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse),StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ProductToReturnDto>> GetProduct(int id){
             var spec = new ProductsWithTypesAndBrandsSpecification(id);    
             var product = await _productsRepo.GetEntityWithSpec(spec);
+            if (product == null){
+                return NotFound(new ApiResponse(404));
+            }
             return _mapper.Map<Product, ProductToReturnDto>(product);
         }
 
